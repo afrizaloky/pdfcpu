@@ -453,15 +453,17 @@ func buildP7CertChains(
 		currentTime = *signingTime
 	}
 
+	if first {
+		result.Details.SignerIdentity = cert.Subject.CommonName
+	}
+
 	intermediates := collectIntermediates(cert, certs)
 	chains, err := pkcs7.VerifyCertChain(cert, intermediates, rootCerts, currentTime)
 	if err != nil {
 		handleCertVerifyErr(err, cert, signer, result)
 		return nil
 	}
-	if first {
-		result.Details.SignerIdentity = cert.Subject.CommonName
-	}
+
 	return chains
 }
 
