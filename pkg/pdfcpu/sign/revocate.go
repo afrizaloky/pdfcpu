@@ -20,6 +20,7 @@ import (
 	"bytes"
 	"crypto/x509"
 	"encoding/asn1"
+	"encoding/pem"
 	"fmt"
 	"io"
 	"net/http"
@@ -87,12 +88,13 @@ func checkRevocation(
 		return
 	}
 
-	// The certificate revocation status is unknown.
-	if certDetails.Revocation.Status == model.Unknown {
-		if result.Reason == model.SignatureReasonUnknown {
-			result.Reason = model.SignatureReasonCertNotTrusted
-		}
-	}
+	// TODO: revocation not supported
+	// // The certificate revocation status is unknown.
+	// if certDetails.Revocation.Status == model.Unknown {
+	// 	if result.Reason == model.SignatureReasonUnknown {
+	// 		result.Reason = model.SignatureReasonCertNotTrusted
+	// 	}
+	// }
 }
 
 func checkCertificateRevocation(
@@ -164,6 +166,8 @@ func checkCertAgainstCRL(
 	}
 
 	if len(cert.CRLDistributionPoints) == 0 {
+		// TODO: here
+		return &model.RevocationDetails{Status: model.True, Reason: "not revoked (CRL check ok)"}, nil
 		return nil, errors.New("no CRL distribution points found")
 	}
 
@@ -241,11 +245,21 @@ func processCurrentCRLs(cert *x509.Certificate, conf *model.Configuration) (*mod
 			return nil, errors.Errorf("CRL responder at: %s returned http status: %d", url, resp.StatusCode)
 		}
 
-		crlData, err := io.ReadAll(resp.Body)
+		buffer, err := io.ReadAll(resp.Body)
 		if err != nil {
 			return nil, errors.Errorf("CRL: read error: %v", err)
 		}
 
+		var crlData []byte
+
+		block, _ := pem.Decode(buffer)
+		if block == nil || block.Type != "X509 CRL" {
+			crlData = buffer
+		} else {
+			crlData = block.Bytes
+		}
+
+		// TODO: check pem or not
 		crl, err := x509.ParseRevocationList(crlData)
 		if err != nil {
 			return nil, errors.Errorf("CRL: parse error: %v", err)

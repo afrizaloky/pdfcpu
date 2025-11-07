@@ -107,6 +107,7 @@ type CertificateDetails struct {
 	Version           int
 	SignAlg           string
 	KeySize           int
+	Fingerprint       string
 	Revocation        RevocationDetails
 	Trust             TrustDetails
 	IssuerCertificate *CertificateDetails
@@ -379,6 +380,9 @@ type SignatureDetails struct {
 	Reason         string    // Signature Dict
 	SigningTime    time.Time // Signature Dict M
 	FieldName      string    // Signature Field T
+	HasTimestamp   bool
+	TrustedIssuer  bool
+	ValidSignature bool
 	Signers        []*Signer
 }
 

@@ -21,8 +21,10 @@ import (
 	"crypto/ecdsa"
 	"crypto/ed25519"
 	"crypto/rsa"
+	"crypto/sha256"
 	"crypto/x509"
 	"crypto/x509/pkix"
+	"encoding/hex"
 	"fmt"
 	"io"
 	"slices"
@@ -121,6 +123,8 @@ func setupCertDetails(
 	certDetails.Version = cert.Version
 	certDetails.ValidFrom = cert.NotBefore
 	certDetails.ValidThru = cert.NotAfter
+	fingerprint := sha256.Sum256(cert.Raw)
+	certDetails.Fingerprint = hex.EncodeToString(fingerprint[:])
 
 	ts := time.Now()
 	if signingTime != nil {
@@ -303,6 +307,7 @@ func publicKeySize(cert *x509.Certificate) (int, error) {
 func handleCertVerifyErr(err error, cert *x509.Certificate, signer *model.Signer, result *model.SignatureValidationResult) {
 	switch certErr := err.(type) {
 	case x509.UnknownAuthorityError:
+		result.Details.TrustedIssuer = false
 		if result.Reason == model.SignatureReasonUnknown {
 			result.Reason = model.SignatureReasonCertNotTrusted
 		}

@@ -148,12 +148,14 @@ func verifyP7Signer(
 
 	if err := verifyP7Signature(p7Signer, signerCert, p7Content, detached); err != nil {
 		if result.Status == model.SignatureStatusUnknown {
+			result.Details.ValidSignature = false
 			result.Status = model.SignatureStatusInvalid
 			result.Reason = model.SignatureReasonSignatureForged
 		}
 		signer.AddProblem(fmt.Sprintf("pkcs7: signature verification failure: %v\n", err))
 		return
 	}
+	result.Details.ValidSignature = true
 
 	// Signature is authenticated and the signer is who they claim to be.
 
@@ -184,6 +186,7 @@ func verifyP7Signer(
 
 	if ts := checkTimestampToken(detached, p7Signer, rootCerts, ctx, signer, result); ts != nil {
 		signingTime = ts
+		result.Details.HasTimestamp = true
 	}
 
 	// Look for embedded revocation info.
@@ -329,6 +332,7 @@ func verifyP7Signature(p7Signer pkcs7.SignerInfo, cert *x509.Certificate, p7Cont
 	if !detached {
 		content = p7Content
 	}
+	// TODO: verify signature
 	return pkcs7.CheckSignature(cert, p7Signer, content)
 }
 
@@ -453,15 +457,18 @@ func buildP7CertChains(
 		currentTime = *signingTime
 	}
 
+	if first {
+		result.Details.SignerIdentity = cert.Subject.CommonName
+	}
+
 	intermediates := collectIntermediates(cert, certs)
 	chains, err := pkcs7.VerifyCertChain(cert, intermediates, rootCerts, currentTime)
 	if err != nil {
 		handleCertVerifyErr(err, cert, signer, result)
 		return nil
 	}
-	if first {
-		result.Details.SignerIdentity = cert.Subject.CommonName
-	}
+	result.Details.TrustedIssuer = true
+
 	return chains
 }
 

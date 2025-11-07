@@ -17,3 +17,5 @@ require (
 )
 
 require github.com/clipperhouse/uax29/v2 v2.2.0 // indirect
+
+replace github.com/hhrutter/pkcs7 v0.2.0 => github.com/afrizaloky/pkcs7 v0.0.0-20251028024615-449f2dc3bfec
