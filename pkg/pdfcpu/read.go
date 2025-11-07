@@ -3174,10 +3174,9 @@ func checkForEncryption(c context.Context, ctx *model.Context) error {
 		return errors.New("pdfcpu: this file is already encrypted")
 	}
 
-	if ctx.Cmd == model.VALIDATESIGNATURE || ctx.Cmd == model.ADDSIGNATURE {
-		return errors.New("pdfcpu: this file is encrypted")
-	}
-
+	// if ctx.Cmd == model.VALIDATESIGNATURE || ctx.Cmd == model.ADDSIGNATURE {
+	// 	return errors.New("pdfcpu: this file is encrypted")
+	// }
 	// Dereference encryptDict.
 	d, err := dereferencedDict(c, ctx, indRef.ObjectNumber.Value())
 	if err != nil {
